@@ -1,9 +1,12 @@
 import express from 'express';
+import cors from "cors"
 import Database from 'better-sqlite3';
 
 const app = express();
+app.use(cors())
 
 app.use(express.json());
+app.use(express.urlencoded({extended : true}))
 
 app.get('/', (req, res) => {
   return res.status(200).send({'message': 'SHIPTIVITY API. Read documentation to see API docs'});
@@ -131,6 +134,33 @@ app.put('/api/v1/clients/:id', (req, res) => {
 
   return res.status(200).send(clients);
 });
+
+app.get('/test', (req, res) =>{
+  const query = 'SELECT priority FROM clients';
+  const myData = db.prepare(query).all();
+  console.log(myData);
+  res.send(myData)
+})
+
+app.post('/api/v1/clients/update-positions', (req, res) =>{
+  console.log("The post request have been made")
+  const clients = req.body;
+  try {
+    const updateClientPosition = db.prepare('UPDATE clients SET status = ?, priority = ? WHERE id = ?')
+    const transaction = db.transaction((clients) => {
+      clients.forEach(client => {
+        updateClientPosition.run(client.status, client.priority, client.id);
+      });
+    });
+
+    transaction(clients); 
+
+    res.status(204)
+  } catch (error) {
+    console.error("Error updating client positions:", error);
+    res.status(500).json({ message: 'Failed to update positions' });
+  }
+})
 
 app.listen(3001);
 console.log('app running on port ', 3001);
