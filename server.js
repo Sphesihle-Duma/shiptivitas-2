@@ -143,7 +143,7 @@ app.get('/test', (req, res) =>{
 })
 
 app.post('/api/v1/clients/update-positions', (req, res) =>{
-  console.log("The post request have been made")
+  // updating the database
   const clients = req.body;
   try {
     const updateClientPosition = db.prepare('UPDATE clients SET status = ?, priority = ? WHERE id = ?')
