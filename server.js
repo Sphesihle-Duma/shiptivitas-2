@@ -136,7 +136,7 @@ app.put('/api/v1/clients/:id', (req, res) => {
 });
 
 app.get('/test', (req, res) =>{
-  const query = 'SELECT priority FROM clients';
+  const query = 'SELECT priority, status FROM clients';
   const myData = db.prepare(query).all();
   console.log(myData);
   res.send(myData)
