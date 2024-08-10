@@ -136,31 +136,48 @@ app.put('/api/v1/clients/:id', (req, res) => {
 });
 
 app.get('/test', (req, res) =>{
-  const query = 'SELECT priority, status FROM clients';
+  const query = 'SELECT name FROM clients';
   const myData = db.prepare(query).all();
   console.log(myData);
   res.send(myData)
 })
 
-app.post('/api/v1/clients/update-positions', (req, res) =>{
-  // updating the database
+app.post('/api/v1/clients/update-positions', (req, res) => {
   const clients = req.body;
+
   try {
-    const updateClientPosition = db.prepare('UPDATE clients SET status = ?, priority = ? WHERE id = ?')
-    const transaction = db.transaction((clients) => {
+    let myID = 0;
+    // Start a transaction
+    const transaction = db.transaction(() => {
+      console.log("Starting transaction...");
+
+      // Delete all existing records
+      const deleteStatement = db.prepare('DELETE FROM clients');
+      deleteStatement.run();
+      console.log("Deleted existing records.");
+
+      // Insert new records in the correct order
+      const insertClient = db.prepare('INSERT INTO clients (id, name, status, priority) VALUES (?, ?, ?, ?)');
       clients.forEach(client => {
-        updateClientPosition.run(client.status, client.priority, client.id);
+        myID += 1
+        insertClient.run(myID, client.name, client.status, client.priority);
+        console.log(`Inserted client: ${client.name} with priority ${client.priority}`);
       });
     });
 
-    transaction(clients); 
+    // Commit the transaction
+    transaction();
+    console.log("Transaction committed successfully.");
 
-    res.status(204)
+
+    res.status(200).send({ status: "updated" });
   } catch (error) {
     console.error("Error updating client positions:", error);
     res.status(500).json({ message: 'Failed to update positions' });
   }
-})
+});
+
+
 
 app.listen(3001);
 console.log('app running on port ', 3001);
